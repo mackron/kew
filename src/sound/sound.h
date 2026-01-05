@@ -13,6 +13,7 @@
 
 #include <fcntl.h>
 #include <miniaudio.h>
+#include <miniaudio_pipewire.h>
 #include <pthread.h>
 #include <stdatomic.h>
 #include <stdbool.h>

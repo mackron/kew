@@ -1,3 +1,6 @@
+#include <miniaudio_libopus.c>
+#include <miniaudio_libvorbis.c>
+
 #include "decoders.h"
 
 #include "playback.h"

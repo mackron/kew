@@ -137,7 +137,7 @@ static ma_result file_on_read(void *pUserData, void *pBufferOut, size_t bytesToR
 static ma_result file_on_seek(void *pUserData, ma_int64 offset, ma_seek_origin origin)
 {
         FILE *fp = (FILE *)pUserData;
-        int whence = (origin == ma_seek_origin_start) ? SEEK_SET : SEEK_CUR;
+        int whence = (origin == MA_SEEK_SET) ? SEEK_SET : SEEK_CUR;
         if (fseeko(fp, offset, whence) != 0) {
                 return MA_ERROR;
         }
@@ -150,7 +150,7 @@ static int minimp4_read_callback(int64_t offset, void *buffer, size_t size, void
 
         // Cast int64_t to ma_int64 for onSeek
         ma_int64 ma_offset = (ma_int64)offset;
-        if (file_on_seek(pM4a->file, ma_offset, ma_seek_origin_start) != MA_SUCCESS) {
+        if (file_on_seek(pM4a->file, ma_offset, MA_SEEK_SET) != MA_SUCCESS) {
                 return 1; // Error
         }
 
@@ -165,7 +165,7 @@ static int minimp4_read_callback(int64_t offset, void *buffer, size_t size, void
 int64_t minimp4_seek_callback(void *user_data, int64_t offset)
 {
         m4a_decoder *pM4a = (m4a_decoder *)user_data;
-        ma_result result = file_on_seek(pM4a->file, offset, ma_seek_origin_start);
+        ma_result result = file_on_seek(pM4a->file, offset, MA_SEEK_SET);
         if (result != MA_SUCCESS) {
                 return -1; // Signal error
         }
@@ -227,7 +227,7 @@ MA_API ma_result m4a_decoder_init(
                 return MA_ERROR;
         }
 
-        if (pM4a->onSeek(pM4a->pReadSeekTellUserData, 0, ma_seek_origin_end) != MA_SUCCESS) {
+        if (pM4a->onSeek(pM4a->pReadSeekTellUserData, 0, MA_SEEK_END) != MA_SUCCESS) {
                 return MA_ERROR;
         }
 
@@ -237,7 +237,7 @@ MA_API ma_result m4a_decoder_init(
         }
 
         // Seek back to original position
-        if (pM4a->onSeek(pM4a->pReadSeekTellUserData, currentPos, ma_seek_origin_start) != MA_SUCCESS) {
+        if (pM4a->onSeek(pM4a->pReadSeekTellUserData, currentPos, MA_SEEK_SET) != MA_SUCCESS) {
                 return MA_ERROR;
         }
 
@@ -958,7 +958,7 @@ MA_API ma_result m4a_decoder_seek_to_pcm_frame(m4a_decoder *pM4a, ma_uint64 fram
                         return MA_ERROR;
                 }
 
-                if (file_on_seek(pM4a->file, sample_offset, ma_seek_origin_start) != MA_SUCCESS) {
+                if (file_on_seek(pM4a->file, sample_offset, MA_SEEK_SET) != MA_SUCCESS) {
                         return MA_ERROR;
                 }
 
@@ -984,7 +984,7 @@ MA_API ma_result m4a_decoder_seek_to_pcm_frame(m4a_decoder *pM4a, ma_uint64 fram
                         return MA_ERROR;
                 }
 
-                if (file_on_seek(pM4a->file, sample_offset, ma_seek_origin_start) != MA_SUCCESS) {
+                if (file_on_seek(pM4a->file, sample_offset, MA_SEEK_SET) != MA_SUCCESS) {
                         return MA_ERROR;
                 }
 

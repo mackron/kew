@@ -1,6 +1,7 @@
-#define MA_EXPERIMENTAL__DATA_LOOPING_AND_CHAINING
+#define MA_DEBUG_OUTPUT
 #define MA_NO_ENGINE
-#define MINIAUDIO_IMPLEMENTATION
+#include <miniaudio.c>
+#include <miniaudio_pipewire.c>
 
 /**
  * @file sound.[c]
@@ -281,9 +282,9 @@ static const struct
 codec_ops_list[] = {
     {NULL, {.getDecoder = (void *(*)(void))get_current_builtin_decoder, .get_file_info = get_builtin_file_info_wrapper, .get_decoder_format = (ma_result (*)(ma_data_source *, ma_format *, ma_uint32 *, ma_uint32 *, ma_channel *, size_t))ma_decoder_get_data_format, .create_audio_device = builtin_createAudioDeviceWrapper, .implType = BUILTIN, .supportsGapless = true}},
 
-    {"opus", {.getDecoder = (void *(*)(void))get_current_opus_decoder, .get_file_info = get_opus_file_info, .get_decoder_format = (ma_result (*)(ma_data_source *, ma_format *, ma_uint32 *, ma_uint32 *, ma_channel *, size_t))ma_libopus_ds_get_data_format, .create_audio_device = opus_createAudioDevice, .implType = OPUS, .supportsGapless = true}},
+    {"opus", {.getDecoder = (void *(*)(void))get_current_opus_decoder, .get_file_info = get_opus_file_info, .get_decoder_format = (ma_result (*)(ma_data_source *, ma_format *, ma_uint32 *, ma_uint32 *, ma_channel *, size_t))ma_libopus_get_data_format, .create_audio_device = opus_createAudioDevice, .implType = OPUS, .supportsGapless = true}},
 
-    {"ogg", {.getDecoder = (void *(*)(void))get_current_vorbis_decoder, .get_file_info = get_vorbis_file_info, .get_decoder_format = (ma_result (*)(ma_data_source *, ma_format *, ma_uint32 *, ma_uint32 *, ma_channel *, size_t))ma_libvorbis_ds_get_data_format, .create_audio_device = vorbis_createAudioDevice, .implType = VORBIS, .supportsGapless = true}},
+    {"ogg", {.getDecoder = (void *(*)(void))get_current_vorbis_decoder, .get_file_info = get_vorbis_file_info, .get_decoder_format = (ma_result (*)(ma_data_source *, ma_format *, ma_uint32 *, ma_uint32 *, ma_channel *, size_t))ma_libvorbis_get_data_format, .create_audio_device = vorbis_createAudioDevice, .implType = VORBIS, .supportsGapless = true}},
 
     {"webm", {.getDecoder = (void *(*)(void))get_current_webm_decoder, .get_file_info = get_webm_file_info, .get_decoder_format = (ma_result (*)(ma_data_source *, ma_format *, ma_uint32 *, ma_uint32 *, ma_channel *, size_t))ma_webm_ds_get_data_format, .create_audio_device = webm_createAudioDevice, .implType = WEBM, .supportsGapless = false}},
 #ifdef USE_FAAD
@@ -385,7 +386,7 @@ static int init_audio_data_from_codec_decoder(const CodecOps *ops, void *decoder
 
         case OPUS: {
                 ma_libopus *d = (ma_libopus *)decoder;
-                ma_libopus_ds_get_data_format(d, &audio_data->format, &audio_data->channels,
+                ma_libopus_get_data_format(d, &audio_data->format, &audio_data->channels,
                                               &audio_data->sample_rate, channel_map, MA_MAX_CHANNELS);
                 ma_data_source_get_length_in_pcm_frames((ma_data_source *)d, &audio_data->totalFrames);
 
@@ -396,7 +397,7 @@ static int init_audio_data_from_codec_decoder(const CodecOps *ops, void *decoder
 
         case VORBIS: {
                 ma_libvorbis *d = (ma_libvorbis *)decoder;
-                ma_libvorbis_ds_get_data_format(d, &audio_data->format, &audio_data->channels,
+                ma_libvorbis_get_data_format(d, &audio_data->format, &audio_data->channels,
                                                 &audio_data->sample_rate, channel_map, MA_MAX_CHANNELS);
                 ma_data_source_get_length_in_pcm_frames((ma_data_source *)d, &audio_data->totalFrames);
 
@@ -672,11 +673,20 @@ int pb_create_audio_device(void)
 {
         PlaybackState *ps = get_playback_state();
 
+        ma_device_backend_config backends[] =
+        {
+            { ma_device_backend_pipewire,   NULL },
+            { ma_device_backend_pulseaudio, NULL },
+            { ma_device_backend_alsa,       NULL },
+            { ma_device_backend_null,       NULL }
+        };
+
         if (context_initialized) {
                 ma_context_uninit(&context);
                 context_initialized = false;
         }
-        ma_context_init(NULL, 0, NULL, &context);
+
+        ma_context_init(backends, sizeof(backends) / sizeof(backends[0]), NULL, &context);
         context_initialized = true;
 
         if (pb_switch_audio_implementation() >= 0) {

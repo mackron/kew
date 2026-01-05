@@ -174,13 +174,13 @@ static int nestegg_io_seek(int64_t offset, int whence, void *userdata)
         ma_seek_origin origin;
         switch (whence) {
         case NESTEGG_SEEK_SET:
-                origin = ma_seek_origin_start;
+                origin = MA_SEEK_SET;
                 break;
         case NESTEGG_SEEK_CUR:
-                origin = ma_seek_origin_current;
+                origin = MA_SEEK_CUR;
                 break;
         case NESTEGG_SEEK_END:
-                origin = ma_seek_origin_end;
+                origin = MA_SEEK_END;
                 break;
         default:
                 return -1;
